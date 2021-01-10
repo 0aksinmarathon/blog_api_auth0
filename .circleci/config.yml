@@ -1,0 +1,57 @@
+version: 2.1
+
+executors:
+  default:
+    description: The official CircleCI Python Docker image.
+    docker:
+    - image: circleci/python:<< parameters.tag >>
+      environment:
+        APP_DEBUG: True
+        APP_KEY: u7egk*-p3=h$705ga+)(%u8d-#$g=7opz_b-(p71yry81pgr_v
+        DB_ENGINE: django.db.backends.mysql
+        DB_DATABASE_NAME: blog
+        DB_USER: root
+        DB_PASSWORD: blog
+        DB_HOST: db
+    parameters:
+      tag:
+        default: latest
+        description: The `circleci/python` Docker image version tag.
+        type: string
+
+orbs:
+  python: circleci/python@0.2.1
+
+jobs:
+  build-and-test:
+    parameters:
+    executor:
+      name: default
+      tag: "3.8"
+    steps:
+      - checkout
+      - python/load-cache
+      - python/install-deps
+      - python/save-cache
+      - run:
+          command: ./manage.py test
+          name: Test
+  deploy:
+    machine:
+      image: circleci/classic:edge
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "66:3a:cf:bc:e3:37:bf:c0:4a:38:62:36:68:59:b0:e5"
+      - run: ssh ${USER_NAME}@${HOST_NAME} 'cd blog_api && git pull'
+workflows:
+  main:
+    jobs:
+      - build-and-test
+      - deploy:
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only: master

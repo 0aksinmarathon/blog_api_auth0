@@ -1,0 +1,27 @@
+version: "3"
+services:
+  api:
+    container_name: blog-api
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    working_dir: /app
+    ports:
+      - 28000:8000
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+  db:
+    container_name: blog-db
+    image: mysql:5.7
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --query_cache_type=1
+    restart: always
+    environment:
+      MYSQL_DATABASE: blog
+      MYSQL_USER: blog
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - 23306:3306
